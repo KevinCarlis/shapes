@@ -1,0 +1,135 @@
+======================================================================
+ ____  _   _    _    ____  _____   _____ _____ ____ _____ _____ ____
+/ ___|| | | |  / \  |  _ \| ____| |_   _| ____/ ___|_   _| ____|  _ \
+\___ \| |_| | / _ \ | |_) |  _|     | | |  _| \___ \ | | |  _| | |_) |
+ ___) |  _  |/ ___ \|  __/| |___    | | | |___ ___) || | | |___|  _ <
+|____/|_| |_/_/   \_\_|   |_____|   |_| |_____|____/ |_| |_____|_| \_\
+
+ ____   ___   ___   ___
+|___ \ / _ \ / _ \ / _ \
+  __) | | | | | | | | | |
+ / __/| |_| | |_| | |_| |
+|_____|\___/ \___/ \___/
+
+======================================================================
+
+This homework is adapted from my Brother in Law's coding exercise found here:
+https://github.com/jason-kerney/ShapeRefactoring
+
+This is Part 1 of a 2-Part assignment.
+
+Purpose: In this part, you will have to write code that will read in a number
+of points and recognize what shape they are. You will have to use inheritance
+so that you get more practice.
+
+Phase 1:
+You will read in a series of points (a pair of doubles) until the user hits
+ctrl-d (the end of file character). Store them in a vector of Points or
+something.
+
+Phase 2:
+Pass the vector of points to a function that will recognize what shape those
+points are. You can think of each point as being connected to the previous and
+next point. For triangles and rectangles, the last point has to be the same as
+the first point. Your function will return a shared pointer to an abstract
+class which will be overloaded for each of the possible return values. You
+then must call the getType() function on the returned pointer, which will
+print out what the shape is.
+
+The link above shows you the six things that need to be recognized by your
+code. It says you have to calculate things like area and such, but that's
+coming in Part 2. For this assignment, you just need to recognize the shape.
+
+Danger Warning Note: Since we are using doubles, there is a chance of error
+creeping into your calculations, so use an epsilon of 0.01 to see if two
+things are the same. In other words, 10.01 and 10.0 are different, but 10.01
+and 10.005 are considered the same value.
+
+Example 1:
+Please enter a point (x y):
+10 10
+Please enter a point (x y):
+20 20
+Please enter a point (x y):
+30 10
+Please enter a point (x y):
+10 10
+Please enter a point (x y):
+(10,10)
+(20,20)
+(30,10)
+(10,10)
+Triangle
+
+Explanation - a triangle is made of four points, where the first and last
+point are the same point. The points also can't be collinear or duplicates
+(other than the first and last point)
+
+Example 2:
+Please enter a point (x y):
+10 10
+Please enter a point (x y):
+20 10
+Please enter a point (x y):
+20 20
+Please enter a point (x y):
+10 20
+Please enter a point (x y):
+10 10
+Please enter a point (x y):
+(10,10)
+(20,10)
+(20,20)
+(10,20)
+(10,10)
+Rectangle
+
+Explanation - A rectangle is five points making a rectangle shape (four
+interior right angles) where the first and last points are the same. None of
+the points can be collinear or duplicates other than the first and last.
+
+Example 3:
+Please enter a point (x y):
+0 0
+Please enter a point (x y):
+10 10
+Please enter a point (x y):
+(0,0)
+(10,10)
+Line
+
+Explanation: A line is two points that are not the same
+
+See Jason Kerney's readme file for explanations for all six of the categories
+you must recognize. Again, you don't have to do all the extra stuff in his
+code (no need to calculate area, return a vector of points, etc.), just
+successfully categorize the points.
+
+========
+GRADING:
+========
+
+For every comment you put in the code you lose 1 point. So delete them before
+turning them in. 😈
+
+Five points are awarded for creating a class hierarchy for the different
+shapes. You must use the following parent class, and make six child classes
+that each inherit from it, and override the getType method to return just
+their name:
+
+struct Shape {
+    virtual ~Shape() = default;
+    virtual string getType() const = 0;
+};
+
+Your child classes must also have all of the member variables asked for in the
+readme file in the link (area, a vector of points, etc.) but you don't
+actually need to do anything with them just yet.
+
+You must screenshot or copy/paste your class hierarchy (I don't need all
+of your code, just the class hierarchy) on Canvas to get the five points.
+
+The other five points are for correctness (passing the test cases, etc.)
+
+People who get a 10/10 on the assignment will have their assignments thrown
+into a bag and randomly dealt out to other people as starter code for Part 2.
