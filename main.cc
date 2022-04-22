@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include <memory>
 #include <cmath>
+#include <algorithm>
 using namespace std;
 
 bool is_near(double x, double y) {
@@ -20,10 +21,7 @@ struct Shape {
 struct Point: public Shape {
     double x = 0, y = 0;
 	Point(double new_x = 0, double new_y = 0) : x(new_x), y(new_y) {}
-	/*Point(const Point &p) {
-		x = p.x;
-		y = p.y;
-	}*/
+
 	double distance(const Point& p) {
 		return hypot(x - p.x, y - p.y);
 	}
@@ -31,7 +29,10 @@ struct Point: public Shape {
 		return (y - p.y) / (x - p.x);
 	}
 	bool operator==(const Point& p) const{
-		return (this->x == p.x && this->y == p.y);
+		return (is_near(this->x, p.x) && is_near(this->y, p.y));
+	}
+	bool operator!=(const Point& p) const{
+		return (!is_near(this->x, p.x) || !is_near(this->y, p.y));
 	}
 	struct hash {
 		auto operator()(const Point& p) const
@@ -182,7 +183,7 @@ shared_ptr<Shape> GetType(vector<Point> &vec) {
 				other = true;
 				break;
 			}
-			auto loc = find(vertices.begin(), vertices.end(), [] (const Point& p) {return is_near(p, vec.at(b));});
+            auto loc = find_if(vertices.begin(), vertices.end(), [&] (const Point& p) {return p == vec.at(b);});
 			if (!back) {
 				if (is_near(vec.at(b).slope(vec.at(i)), slope)) {
 					if (is_near(vec.at(i).distance(a), vec.at(b).distance(a)))
@@ -193,8 +194,9 @@ shared_ptr<Shape> GetType(vector<Point> &vec) {
 							b = i;
 						}
 						else {
+						    cout << "o1" << endl;
 							other = true;
-							break
+							break;
 						}
 					}
 					else {
@@ -202,6 +204,7 @@ shared_ptr<Shape> GetType(vector<Point> &vec) {
 									vec.at(b).distance(a))) {;}
 						else if (vec.at(b).distance(vec.at(i))
 									> vec.at(b).distance(a)) {
+						    cout << "o2" << endl;
 							other = true;
 							break;
 						}
@@ -217,6 +220,7 @@ shared_ptr<Shape> GetType(vector<Point> &vec) {
 				}
 				else {
 					if (vec.at(b) != vec.at(i-1)) {
+						cout << "o3" << endl;
 						other = true;
 						break;
 					}
@@ -233,7 +237,8 @@ shared_ptr<Shape> GetType(vector<Point> &vec) {
 			else {
 				if (is_near(vec.at(i-1).slope(vec.at(i)), slope)) {
 					if (vec.at(b).distance(vec.at(i)) > vec.at(b).distance(a)) {
-						other = true;
+						cout << "o4" << endl;
+                        other = true;
 						break;
 					}
 					if (vec.at(i-1).distance(vec.at(i)) > vec.at(b).distance(a)) {
@@ -245,7 +250,11 @@ shared_ptr<Shape> GetType(vector<Point> &vec) {
 					slope = vec.at(b).slope(vec.at(i));
 				}
 				else {
-					if (vec.at(i) != a) {
+                    cout << boolalpha << back << endl;
+                    cout << "Turn " << vec.at(i) << vec.at(b) << a;
+                    auto loci = find_if(vertices.begin(), vertices.end(), [&] (const Point& p) {return p == vec.at(i);});
+					if (loci == vertices.end()) {
+						cout << "o5" << endl;
 						other = true;
 						break;
 					}
@@ -263,16 +272,18 @@ shared_ptr<Shape> GetType(vector<Point> &vec) {
 				}
 			}
 		}
-		if (find(vertices.begin(), vertices.end(), vec.at(b)) == vertices.end() && vertices.size() < 3)
-//find(vertices.begin(), vertices.end(), [] (const Point& p) {return is_near(p, vec.at(b));});
+		if (find_if(vertices.begin(), vertices.end(), [&] (const Point& p) {return p == vec.at(b);}) == vertices.end()) {
 			vertices.push_back(vec.at(b));
-	//	for (auto p : vertices)
-	//		cout << p.x << " " << p.y << endl;
-		if (is_near(vec.at(0), vec.at(vec.size()-1)) && vertices.size() > 2) {
-			if (vertices.size() == 3)
-				shape = make_shared<Triangle>(vertices.at(0),
+        }
+        cout << "Other: " << boolalpha << other << endl;
+		for (auto p : vertices)
+			cout << p.x << " " << p.y << endl;
+		if (vec.at(0) == vec.at(vec.size()-1) && vertices.size() > 2) {
+			if (vertices.size() == 3) {
+                shape = make_shared<Triangle>(vertices.at(0),
 						vertices.at(1), vertices.at(2));
-			if (vertices.size() == 4) {
+            }
+            else if (vertices.size() == 4) {
 				double o1 = (vertices.at(1).x-vertices.at(0).x)
 					* (vertices.at(2).x-vertices.at(1).x)
 					+ (vertices.at(1).y-vertices.at(0).y)
@@ -281,10 +292,8 @@ shared_ptr<Shape> GetType(vector<Point> &vec) {
 					* (vertices.at(0).x-vertices.at(3).x)
 					+ (vertices.at(3).y-vertices.at(2).y)
 					* (vertices.at(0).y-vertices.at(3).y);
-	//			cout << o1 << ' ' << o2 << endl;
 				if (o1 == 0 && o2 == 0) {
 					shape = make_shared<Rectangle>(vertices.at(0), vertices.at(1), vertices.at(2), vertices.at(3));
-	//				cout << "Here" <<endl;
 				}
 				else
 					other = true;
