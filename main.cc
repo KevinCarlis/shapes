@@ -179,10 +179,6 @@ shared_ptr<Shape> GetType(vector<Point> &vec) {
 		Point a = vec.at(0);
 		int b = 1;
 		for (size_t i = 2; i < vec.size(); i++) {
-			if (vertices.size() > 4) {
-				other = true;
-				break;
-			}
             auto loc = find_if(vertices.begin(), vertices.end(), [&] (const Point& p) {return p == vec.at(b);});
 			if (!back) {
 				if (is_near(vec.at(b).slope(vec.at(i)), slope)) {
@@ -275,9 +271,9 @@ shared_ptr<Shape> GetType(vector<Point> &vec) {
 		if (find_if(vertices.begin(), vertices.end(), [&] (const Point& p) {return p == vec.at(b);}) == vertices.end()) {
 			vertices.push_back(vec.at(b));
         }
-        cout << "Other: " << boolalpha << other << endl;
-		for (auto p : vertices)
-			cout << p.x << " " << p.y << endl;
+        //cout << "Other: " << boolalpha << other << endl;
+		//for (auto p : vertices)
+			//cout << p.x << " " << p.y << endl;
 		if (vec.at(0) == vec.at(vec.size()-1) && vertices.size() > 2) {
 			if (vertices.size() == 3) {
                 shape = make_shared<Triangle>(vertices.at(0),
@@ -306,9 +302,14 @@ shared_ptr<Shape> GetType(vector<Point> &vec) {
 		}
 		else
 			other = true;
-		if (other)
-			shape = make_shared<Other>(vec, true);
-	}
+		if (other) {
+		    if (find_if(vertices.begin(), vertices.end(), [&] (const Point& p) {
+                        return (p.x == vec.back().x && p.y == vec.back().y
+                                && p.x != vec.front().x && p.y != vec.front().y);})
+                    == vertices.end())
+			        vertices.push_back(vec.at(vec.size()-1));
+                shape = make_shared<Other>(vertices, true);
+	}   }
 	return shape;
 }
 

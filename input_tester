@@ -1,0 +1,106 @@
+#!/bin/tcsh
+
+#Usage: input_tester (timeout time)
+
+#Example:
+#For this example, students will be working in a directory called HW1, in their home directory
+#To test to see if their HW1 program is correct, they do the following:
+# cd ~/HW1
+# /bin/input_tester
+#The script will then look in the /public/HW1 directory for files named inputfile0, inputfile1, etc, as well as outputfile0, outputfile1, etc.
+#The script runs the student's a.out, redirecting in the contents of each inputfile in turn, and diffing the results with the corresponding outputfile
+#If the output of their program matches the correct outputfile, then they pass the test case. If not, it prints what they got wrong
+#There is an optional parameter that controls how long the script takes to time out on infinite loops / long running programs. 
+
+#Settings - change as necessary to match your system
+set public = "tests/" #This is the directory that has the folders with test cases in it. The subdirectories must have the same name as student homework directories
+set ls = "/bin/ls"
+set wc = "/usr/bin/wc"
+set student_directory = "." #This is the home directory for a student
+set reference_directory = ""#This is the folder where the reference directories are found
+
+#This script tests your program named a.out in the current directory against the test cases in the public directory
+set a = "./a.out";
+
+#If /usr/bin/doalarm is installed (wget http://pilcrow.madison.wi.us/sw/doalarm-0.1.7.tgz)
+# then we will add timeouts to the execution of student code, which is good. This stops infinite loops from hanging this script
+#Can choose GNU timeout or doalarm
+set default_timeout = 3; #Default timeout time is 2 seconds, which is short. Students can give an optional parameter to increase this
+@ timeout_time = ($1 + 0)
+if ($timeout_time <= 0) then
+	set timeout_time = $default_timeout; 
+endif
+set doalarm = "timeout -s TERM $timeout_time"; #Kills a program with SIGTERM after so many seconds
+set timeout_code = 124 #GNU timeout error code with SIGTERM
+set timeout_code2 = 137 #GNU timeout error code for SIGKILL
+
+if (-e /usr/bin/doalarm) then
+    #"doalarm -t cpu 2 ./a.out" will limit a program to 2 seconds of full CPU time, regardless of load
+    #set doalarm = "/usr/bin/doalarm -t cpu 5 "
+	set timeout_code = 142 #Error code on timeout
+    #But CPU time won't kill it if it's just waiting on input - for that use wall time -
+    set doalarm = "/usr/bin/doalarm $timeout_time"
+endif
+
+clear #Clear the screen in case they have any errors
+
+#Set some variables to figure out what we're testing and where the inputfiles are
+set home = `/usr/bin/dirname $PWD` #This will be "/home/username" IF a student runs it in the right place
+set basename =  `/usr/bin/basename $PWD .reference` #This will be "fizzbuzz" (or whatever the homework folder name is) - it strips .reference from name when run from reference directory
+set dir = $public$basename #The reference directory the test cases are in
+#echo $dir
+if ($home == $reference_directory || $home == $student_directory) then
+	echo "Testing your '$basename' assignment for correctness..."
+	echo "(All test cases are in '$dir' if you want to look at them.)"
+	echo "-----------------------------------------------------------"
+else
+	echo "Error: You need to run this from inside your homework folder."
+	exit 1
+endif
+
+if (! -e $a) then
+	echo "$a not found. Please type in the name of the executable you want to test: ";
+	set a = $<
+	if (! -x $a) then
+		echo "Executable not found, aborting"
+		exit 1;
+	endif
+endif
+
+if (! -d $dir) then
+	echo "$dir not found. Please type in the directory with the inputfiles: ";
+	set dir = $<
+	if (! -d $dir) then
+		echo "Directory not found, aborting"
+		exit 1;
+	endif
+endif
+
+#Count how many inputfiles there are in the directory
+#They have to be named inputfile0, inputfile1, inputfile2, etc.
+set inputfiles = `$ls -l $dir/inputfile* | $wc -l`
+set tempfile = TEMP_FILE_MADE_BY_INPUT_TESTER
+@ inputfiles = ($inputfiles - 1) #Correct off by one error (i.e. 10 files means inputfile0 through inputfile9)
+foreach x ( `seq 0 $inputfiles` ) #TODO: Why am I not just writing /public/fizzbuzz/inputfile* here??
+	if (-e $dir/inputfile$x) then
+		echo "Test $x : $a < $dir/inputfile$x | diff -B -w - $dir/outputfile$x"
+		sleep 0.1
+		$doalarm $a < $dir/inputfile$x > $tempfile
+		if ($? == $timeout_code || $? == $timeout_code2) then
+			echo "TIMED OUT - your code hit the $default_timeout second time limit"
+		else
+			if (`$doalarm $a < $dir/inputfile$x | diff -a -B -w $tempfile $dir/outputfile$x | $wc -l` == 0) then
+			echo "TEST PASSED!";
+			else
+				diff -a -B -w $tempfile $dir/outputfile$x | more
+				/public/pause.sh #Returns 1 if the user hits q
+				if ($? == 1) then
+					rm $tempfile
+					exit 0
+				endif
+			endif
+		endif
+		rm $tempfile
+		#sleep 0.2 #In some implementations of sleep, this must be an integer, so set to either 0 or 1
+	endif
+end
