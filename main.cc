@@ -245,8 +245,8 @@ shared_ptr<Shape> GetType(vector<Point> &vec) {
 					slope = vec.at(b).slope(vec.at(i));
 				}
 				else {
-                    cout << boolalpha << back << endl;
-                    cout << "Turn " << vec.at(i) << vec.at(b) << a;
+                    //cout << boolalpha << back << endl;
+                    //cout << "Turn " << vec.at(i) << vec.at(b) << a;
                     auto loci = find_if(vertices.begin(), vertices.end(), [&] (const Point& p) {return p == vec.at(i);});
 					if (loci == vertices.end()) {
 						cout << "o5" << endl;
